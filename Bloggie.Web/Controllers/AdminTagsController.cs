@@ -2,6 +2,7 @@
 using Bloggie.Web.Models.ViewModels;
 using Bloggie.Web.Models.Domain;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Bloggie.Web.Controllers
 {
@@ -21,7 +22,7 @@ namespace Bloggie.Web.Controllers
 
         [HttpPost]
         [ActionName("Add")]
-        public IActionResult Add(AddTagRequest addTagRequest)
+        public async Task<IActionResult> Add(AddTagRequest addTagRequest)
         {
             // Mapping AddTagRequest to Tag Domain model
             var tag = new Tag
@@ -30,30 +31,30 @@ namespace Bloggie.Web.Controllers
                 DisplayName = addTagRequest.DisplayName,
             };
 
-            bloggieDbContext.Tags.Add(tag);
-            bloggieDbContext.SaveChanges();
+            await bloggieDbContext.Tags.AddAsync(tag);
+            await bloggieDbContext.SaveChangesAsync();
 
             return RedirectToAction("List");
         }
 
         [HttpGet]
         [ActionName("List")]
-        public IActionResult List()
+        public async Task<IActionResult> List()
         {
             //Use DbContext to read the tags
-            var tags = bloggieDbContext.Tags.ToList();
+            var tags = await bloggieDbContext.Tags.ToListAsync();
 
             return View(tags);
         }
 
         [HttpGet]
-        public IActionResult Edit(Guid id)
+        public async Task<IActionResult> Edit(Guid id)
         {
             //1st method
             //var tag = bloggieDbContext.Tags.Find(id); 
 
             //2nd method
-            var tag = bloggieDbContext.Tags.FirstOrDefault(x => x.Id == id);
+            var tag = await bloggieDbContext.Tags.FirstOrDefaultAsync(x => x.Id == id);
 
             if (tag != null)
             {
@@ -71,7 +72,7 @@ namespace Bloggie.Web.Controllers
         }
 
         [HttpPost]
-        public IActionResult Edit(EditTagRequest editTagRequest)
+        public async Task<IActionResult> Edit(EditTagRequest editTagRequest)
         {
             var tag = new Tag
             {
@@ -80,7 +81,7 @@ namespace Bloggie.Web.Controllers
                 DisplayName = editTagRequest.DisplayName
             };
 
-            var existingTag = bloggieDbContext.Tags.Find(tag.Id);
+            var existingTag = await bloggieDbContext.Tags.FindAsync(tag.Id);
 
             if (existingTag != null)
             {
@@ -88,7 +89,7 @@ namespace Bloggie.Web.Controllers
                 existingTag.DisplayName = tag.DisplayName;
 
                 // Save changes
-                bloggieDbContext.SaveChanges();
+                await bloggieDbContext.SaveChangesAsync();
 
                 //Show success notification
                 return RedirectToAction("Edit", new { id = editTagRequest.Id });
@@ -99,14 +100,14 @@ namespace Bloggie.Web.Controllers
         }
 
         [HttpPost]
-        public IActionResult Delete(EditTagRequest editTagRequest)
+        public async Task<IActionResult> Delete(EditTagRequest editTagRequest)
         {
-            var tag = bloggieDbContext.Tags.Find(editTagRequest.Id);
+            var tag = await bloggieDbContext.Tags.FindAsync(editTagRequest.Id);
 
             if (tag != null)
             {
                 bloggieDbContext.Tags.Remove(tag);
-                bloggieDbContext.SaveChanges();
+                await bloggieDbContext.SaveChangesAsync();
 
                 // Show success notification
                 return RedirectToAction("List");
