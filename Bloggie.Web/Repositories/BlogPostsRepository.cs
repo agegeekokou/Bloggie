@@ -57,9 +57,19 @@ namespace Bloggie.Web.Repositories
             return null;
         }
 
-        public Task<BlogPost?> DeleteAsync(Guid id) 
+        public async Task<BlogPost?> DeleteAsync(Guid id) 
         {
-            throw new NotImplementedException();
+            var existingBlog = await bloggieDbContext.BlogPosts.FindAsync(id);
+
+            if (existingBlog != null)
+            {
+                bloggieDbContext.BlogPosts.Remove(existingBlog);
+                await bloggieDbContext.SaveChangesAsync();
+
+                return existingBlog;
+            }
+
+            return null;
         }
     }
 }
