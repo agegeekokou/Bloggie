@@ -1,4 +1,5 @@
 using Bloggie.Web.Models;
+using Bloggie.Web.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
@@ -6,16 +7,20 @@ namespace Bloggie.Web.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly ILogger<HomeController> logger;
+        private readonly IBlogPostsRepository blogPostsRepository;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, IBlogPostsRepository blogPostsRepository)
         {
-            _logger = logger;
+            this.logger = logger;
+            this.blogPostsRepository = blogPostsRepository;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            var blogPosts = await blogPostsRepository.GetAllAsync();
+
+            return View(blogPosts);
         }
 
         public IActionResult Privacy()
