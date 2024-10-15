@@ -7,9 +7,13 @@ namespace Bloggie.Web.Controllers
     public class AccountController : Controller
     {
         private readonly UserManager<IdentityUser> userManager;
-        public AccountController(UserManager<IdentityUser> userManager) 
+        private readonly SignInManager<IdentityUser> signInManager;
+
+        public AccountController(UserManager<IdentityUser> userManager,
+             SignInManager<IdentityUser> signInManager) 
         {
             this.userManager = userManager;
+            this.signInManager = signInManager;
         }
 
 
@@ -23,7 +27,56 @@ namespace Bloggie.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> Register(RegisterViewModel registerViewModel)
         {
+            var identityUser = new IdentityUser
+            {
+                UserName = registerViewModel.UserName,
+                Email = registerViewModel.Email
+            };
 
+            var identityResult = await userManager.CreateAsync(identityUser, registerViewModel.Password);
+
+            if(identityResult.Succeeded)
+            {
+                // Assign this user the "User" role
+                var roleIdentityResult = await userManager.AddToRoleAsync(identityUser, "User");
+
+                if(roleIdentityResult.Succeeded)
+                {
+                    // Show success notification
+                    return RedirectToAction("Register");
+                }
+            }
+
+            // Show error notification
+            return View();
+        }
+
+
+        public IActionResult Login()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Login(LoginViewModel loginViewModel)
+        {
+            var signInResult = await signInManager.PasswordSignInAsync(loginViewModel.UserName, loginViewModel.Password, false, false);
+
+            if (signInResult != null && signInResult.Succeeded)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            //show errors
+            return View();
+        }
+
+
+        public async Task<IActionResult> Logout()
+        {
+            await signInManager.SignOutAsync();
+
+            return RedirectToAction("Index", "Home");
         }
     }
 }

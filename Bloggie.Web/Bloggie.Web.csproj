@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="Views\Account\Login.cshtml" />
     <Content Remove="Views\AdminTags\Edit.cshtml" />
   </ItemGroup>
 
@@ -28,11 +29,17 @@
   </ItemGroup>
 
   <ItemGroup>
+    <_ContentIncludedByDefault Remove="Views\Account\Login.cshtml" />
     <_ContentIncludedByDefault Remove="Views\AdminTags\Edit.cshtml" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="Views\Account\Login.cshtml" />
     <None Include="Views\AdminTags\Edit.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <UpToDateCheckInput Remove="Views\Account\Login.cshtml" />
   </ItemGroup>
 
 </Project>
