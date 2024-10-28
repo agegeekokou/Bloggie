@@ -13,16 +13,19 @@ namespace Bloggie.Web.Controllers
         private readonly IBlogPostLikeRepository blogPostLikeRepository;
         private readonly SignInManager<IdentityUser> signInManager;
         private readonly UserManager<IdentityUser> userManager;
+        private readonly IBlogPostCommentRepository blogPostCommentRepository;
 
         public BlogsController(IBlogPostsRepository blogPostsRepository,
             IBlogPostLikeRepository blogPostLikeRepository,
             SignInManager<IdentityUser> signInManager,
-            UserManager<IdentityUser> userManager) 
+            UserManager<IdentityUser> userManager,
+            IBlogPostCommentRepository blogPostCommentRepository) 
         {
             this.blogPostsRepository = blogPostsRepository;
             this.blogPostLikeRepository = blogPostLikeRepository;
             this.signInManager = signInManager;
             this.userManager = userManager;
+            this.blogPostCommentRepository = blogPostCommentRepository;
         }
 
 
@@ -51,6 +54,21 @@ namespace Bloggie.Web.Controllers
                     }
                 }
 
+                // Get comments for Blog post
+                var blogCommentsDomainModel = await blogPostCommentRepository.GetCommentsByBlogPostIdAsync(blogPost.Id);
+
+                var blogCommentsForView = new List<BlogComment>();
+
+                foreach (var blogComment in blogCommentsDomainModel)
+                {
+                    blogCommentsForView.Add(new BlogComment()
+                    {
+                        Description = blogComment.Description,
+                        DateAdded = blogComment.DateAdded,  
+                        UserName = (await userManager.FindByIdAsync(blogComment.UserId.ToString())).UserName
+                    });
+                }
+
                 blogDetailsViewModel = new BlogDetailsViewModel()
                 {
                     Id = blogPost.Id,
@@ -66,10 +84,33 @@ namespace Bloggie.Web.Controllers
                     Tags = blogPost.Tags,
                     TotalLikes = totalLikes,
                     Liked = liked,  
+                    Comments = blogCommentsForView
                 };
             }
 
             return View(blogDetailsViewModel);
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> Index(BlogDetailsViewModel blogDetailsViewModel)
+        {
+            if(signInManager.IsSignedIn(User))
+            {
+                var domainModel = new BlogPostComment()
+                {
+                    BlogPostId = blogDetailsViewModel.Id,
+                    Description = blogDetailsViewModel.CommentDescription,
+                    UserId = Guid.Parse(userManager.GetUserId(User)),
+                    DateAdded = DateTime.Now
+                };
+
+                await blogPostCommentRepository.AddAsync(domainModel);
+
+                return RedirectToAction("Index", "Blogs", new { urlHandle = blogDetailsViewModel.UrlHandle });
+            }
+
+            return View();        
         }
     }
 }
