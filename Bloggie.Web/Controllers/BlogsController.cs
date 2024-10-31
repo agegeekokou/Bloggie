@@ -47,7 +47,7 @@ namespace Bloggie.Web.Controllers
 
                     var userId = userManager.GetUserId(User);
 
-                    if(userId != null)
+                    if(!string.IsNullOrEmpty(userId)) 
                     {
                         var likeFromUser = likesForBlog.FirstOrDefault(x => x.UserId == Guid.Parse(userId));
                         liked = likeFromUser != null;
@@ -61,13 +61,22 @@ namespace Bloggie.Web.Controllers
 
                 foreach (var blogComment in blogCommentsDomainModel)
                 {
+                    var userName = "Anonymous";  // Default value if UserId is null or user lookup fails
+
+                    if (blogComment.UserId != null)
+                    {
+                        var user = await userManager.FindByIdAsync(blogComment.UserId.ToString());
+                        userName = user?.UserName ?? "Unknown";  // If user lookup fails, set to "Unknown"
+                    }
+
                     blogCommentsForView.Add(new BlogComment()
                     {
                         Description = blogComment.Description,
-                        DateAdded = blogComment.DateAdded,  
-                        UserName = (await userManager.FindByIdAsync(blogComment.UserId.ToString())).UserName
+                        DateAdded = blogComment.DateAdded,
+                        UserName = userName
                     });
                 }
+
 
                 blogDetailsViewModel = new BlogDetailsViewModel()
                 {
@@ -97,17 +106,27 @@ namespace Bloggie.Web.Controllers
         {
             if(signInManager.IsSignedIn(User))
             {
-                var domainModel = new BlogPostComment()
+                var userId = userManager.GetUserId(User);
+
+                if (!string.IsNullOrEmpty(userId))
                 {
-                    BlogPostId = blogDetailsViewModel.Id,
-                    Description = blogDetailsViewModel.CommentDescription,
-                    UserId = Guid.Parse(userManager.GetUserId(User)),
-                    DateAdded = DateTime.Now
-                };
+                    var domainModel = new BlogPostComment()
+                    {
+                        BlogPostId = blogDetailsViewModel.Id,
+                        Description = blogDetailsViewModel.CommentDescription,
+                        UserId = Guid.Parse(userId),
+                        DateAdded = DateTime.Now
+                    };
 
-                await blogPostCommentRepository.AddAsync(domainModel);
+                    await blogPostCommentRepository.AddAsync(domainModel);
 
-                return RedirectToAction("Index", "Blogs", new { urlHandle = blogDetailsViewModel.UrlHandle });
+                    return RedirectToAction("Index", "Blogs", new { urlHandle = blogDetailsViewModel.UrlHandle });
+                }
+                else
+                {
+                    // Handle the case where userId is null 
+                    return RedirectToAction("Index", "Blogs");
+                }
             }
 
             return View();        
