@@ -13,7 +13,8 @@ namespace Bloggie.Web.Repositories
             this.bloggieDbContext = bloggieDbContext;    
         }
 
-        public async Task<IEnumerable<Tag>> GetAllAsync(string? searchQuery, string? sortBy, string? sortDirection)
+        public async Task<IEnumerable<Tag>> GetAllAsync(string? searchQuery, string? sortBy, string? sortDirection,
+            int pageNumber = 1, int pageSize = 100)
         {
             var query = bloggieDbContext.Tags.AsQueryable();
 
@@ -40,6 +41,10 @@ namespace Bloggie.Web.Repositories
             }
 
             //Pagination
+            //Skip 0 take 5 -> Page 1 of 5 results
+            //Skip 5 take next 5 -> Page 2 of 5 results
+            var skipResults = (pageNumber - 1) * pageSize;
+            query = query.Skip(skipResults).Take(pageSize);
 
             return await query.ToListAsync();
             //return await bloggieDbContext.Tags.ToListAsync();
@@ -89,6 +94,11 @@ namespace Bloggie.Web.Repositories
             }
 
             return null;
-        }      
+        }
+
+       public async Task<int> CountAsync()
+       {
+            return await bloggieDbContext.Tags.CountAsync(); 
+       }
     }
 }
