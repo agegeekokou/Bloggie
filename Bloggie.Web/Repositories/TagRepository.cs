@@ -13,7 +13,7 @@ namespace Bloggie.Web.Repositories
             this.bloggieDbContext = bloggieDbContext;    
         }
 
-        public async Task<IEnumerable<Tag>> GetAllAsync(string? searchQuery)
+        public async Task<IEnumerable<Tag>> GetAllAsync(string? searchQuery, string? sortBy, string? sortDirection)
         {
             var query = bloggieDbContext.Tags.AsQueryable();
 
@@ -24,6 +24,20 @@ namespace Bloggie.Web.Repositories
             }
 
             //Sorting
+            if (!string.IsNullOrWhiteSpace(sortBy))
+            {
+                var isDesc = string.Equals(sortDirection, "Desc", StringComparison.OrdinalIgnoreCase);
+
+                if(string.Equals(sortBy, "Name", StringComparison.OrdinalIgnoreCase))
+                {
+                    query = isDesc ? query.OrderByDescending(x => x.Name) : query.OrderBy(x => x.Name);
+                }
+
+                if (string.Equals(sortBy, "DisplayName", StringComparison.OrdinalIgnoreCase))
+                {
+                    query = isDesc ? query.OrderByDescending(x => x.DisplayName) : query.OrderBy(x => x.DisplayName);
+                }
+            }
 
             //Pagination
 
