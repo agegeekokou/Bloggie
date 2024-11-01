@@ -13,9 +13,22 @@ namespace Bloggie.Web.Repositories
             this.bloggieDbContext = bloggieDbContext;    
         }
 
-        public async Task<IEnumerable<Tag>> GetAllAsync()
+        public async Task<IEnumerable<Tag>> GetAllAsync(string? searchQuery)
         {
-            return await bloggieDbContext.Tags.ToListAsync();
+            var query = bloggieDbContext.Tags.AsQueryable();
+
+            //Filtering
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                query = query.Where(x => x.Name.Contains(searchQuery) || x.DisplayName.Contains(searchQuery));
+            }
+
+            //Sorting
+
+            //Pagination
+
+            return await query.ToListAsync();
+            //return await bloggieDbContext.Tags.ToListAsync();
         }
 
         public Task<Tag?> GetAsync(Guid id)
